@@ -46,7 +46,9 @@ const result = {
   secondBootstrapParts: countBootstrapParts(secondOutput),
   staleMentionMapping: bootstrapText(firstOutput).includes('@mention'),
   staleTaskMapping: bootstrapText(firstOutput).includes('`Task` tool with subagents'),
-  mapsSubagentToTask: bootstrapText(firstOutput).includes('`task` with `subagent_type: "general"`'),
+  mapsSubagentRoles: ['superpowers-implementer', 'superpowers-reviewer', 'superpowers-explorer']
+    .every((name) => bootstrapText(firstOutput).includes(name)),
+  mapsGeneralFallback: bootstrapText(firstOutput).includes('`general`'),
   mapsMutationToApplyPatch: bootstrapText(firstOutput).includes('`apply_patch`'),
   firstReadCount: afterFirst.readCount,
   secondReadCount: afterSecond.readCount,
@@ -116,8 +118,11 @@ function assertPresentBootstrap(result) {
   if (result.staleTaskMapping) {
     failures.push('expected OpenCode bootstrap not to teach stale Task-tool mapping');
   }
-  if (!result.mapsSubagentToTask) {
-    failures.push('expected OpenCode bootstrap to map general-purpose subagents to task with subagent_type');
+  if (!result.mapsSubagentRoles) {
+    failures.push('expected OpenCode bootstrap to route subagent dispatches to the named superpowers agents');
+  }
+  if (!result.mapsGeneralFallback) {
+    failures.push('expected OpenCode bootstrap to keep general as the fallback subagent');
   }
   if (!result.mapsMutationToApplyPatch) {
     failures.push('expected OpenCode bootstrap to map file mutation to apply_patch');
