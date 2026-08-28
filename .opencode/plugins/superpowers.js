@@ -46,6 +46,29 @@ const normalizePath = (p, homeDir) => {
   return path.resolve(normalized);
 };
 
+// Named subagents registered into every OpenCode session. Thin registry
+// entries only: role identity plus permission guards. Dispatch prompt
+// content still comes from the skills' dispatch templates. Model is left
+// unset so each agent inherits the session default until the user sets one
+// per-agent in opencode.json. See
+// docs/superpowers/specs/2026-08-27-opencode-named-subagents-design.md
+const SUBAGENTS = {
+  'superpowers-implementer': {
+    mode: 'subagent',
+    description: 'Implementation agent for superpowers skills. Executes a filled implementer or fix dispatch template: writes code, runs tests, commits.',
+  },
+  'superpowers-reviewer': {
+    mode: 'subagent',
+    description: 'Review agent for superpowers skills. Reviews filled reviewer dispatch templates (task review, re-review, final/spec/plan review) against their requirements and reports findings; never edits code.',
+    permission: { edit: 'deny' },
+  },
+  'superpowers-explorer': {
+    mode: 'subagent',
+    description: 'Read-only exploration agent for superpowers skills. Searches the codebase and answers research questions; reports findings without modifying anything.',
+    permission: { edit: 'deny' },
+  },
+};
+
 // Module-level cache for bootstrap content.
 // The SKILL.md file does not change during a session, so reading + parsing it
 // once eliminates redundant fs.existsSync + fs.readFileSync + regex work on
@@ -109,6 +132,12 @@ ${toolMapping}
       config.skills.paths = config.skills.paths || [];
       if (!config.skills.paths.includes(superpowersSkillsDir)) {
         config.skills.paths.push(superpowersSkillsDir);
+      }
+
+      config.agent = config.agent || {};
+      for (const [name, defaults] of Object.entries(SUBAGENTS)) {
+        if (config.agent[name]?.disable) continue;
+        config.agent[name] = { ...defaults, ...config.agent[name] };
       }
     },
 
