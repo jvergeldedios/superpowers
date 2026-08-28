@@ -45,8 +45,10 @@ while [[ $# -gt 0 ]]; do
             echo "Tests:"
             echo "  test-plugin-loading.sh  Verify plugin installation and structure"
             echo "  test-bootstrap-caching.sh  Verify bootstrap content caching"
+            echo "  test-named-agents-merge.sh  Verify named subagent registration and merge semantics"
             echo "  test-tools.sh           Test use_skill and find_skills tools (integration)"
             echo "  test-priority.sh        Test skill priority resolution (integration)"
+            echo "  test-named-agents.sh    Test named subagent dispatch (integration)"
             exit 0
             ;;
         *)
@@ -68,6 +70,7 @@ tests=(
 integration_tests=(
     "test-tools.sh"
     "test-priority.sh"
+    "test-named-agents.sh"
 )
 
 # Add integration tests if requested
