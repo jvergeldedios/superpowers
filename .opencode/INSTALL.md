@@ -101,13 +101,38 @@ Then use the installed package path in `opencode.json`:
 Skills speak in actions ("create a todo", "dispatch a subagent", "read a file"). On OpenCode these resolve to:
 
 - "Create a todo" / "mark complete in todo list" → `todowrite`
-- `Subagent (general-purpose):` template → `task` tool with `subagent_type: "general"` (or `"explore"` for codebase exploration)
+- `Subagent (general-purpose):` template → `task` tool with `subagent_type` chosen by role: implementation/fix work → `superpowers-implementer`; reviews → `superpowers-reviewer`; exploration/research → `superpowers-explorer`; anything else, or if a named agent is unavailable → `general`
 - "Invoke a skill" → OpenCode's native `skill` tool
 - "Read a file" → `read`
 - "Create a file" / "edit a file" / "delete a file" → `apply_patch`
 - "Run a shell command" → `bash`
 - "Search file contents" / "find files by name" → `grep`, `glob`
 - "Fetch a URL" → `webfetch`
+
+## Tuning subagent models
+
+The plugin registers three named subagents — `superpowers-implementer`,
+`superpowers-reviewer`, and `superpowers-explorer`. OpenCode's `task` tool
+has no per-dispatch model setting, so set a default model per role in your
+`opencode.json` (project or global):
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "superpowers-implementer": { "model": "openai/gpt-5-codex" },
+    "superpowers-reviewer": { "model": "anthropic/claude-opus-4-6" },
+    "superpowers-explorer": { "model": "anthropic/claude-haiku-4-5" }
+  }
+}
+```
+
+The model IDs above are examples — use any model available to your OpenCode.
+Agents with no `model` set inherit the session default. Your `agent` entries
+override the plugin's defaults field-by-field, so you can also change
+permissions or descriptions; `"disable": true` removes an agent entirely
+(dispatches then fall back to `general`). Restart OpenCode after editing
+`opencode.json` — config is not hot-reloaded.
 
 ## Getting Help
 

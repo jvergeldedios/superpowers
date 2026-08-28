@@ -97,17 +97,18 @@ To pin a specific version, use a branch or tag:
 
 ## How It Works
 
-The plugin does two things:
+The plugin does three things:
 
 1. **Injects bootstrap context** via the `experimental.chat.messages.transform` hook, adding superpowers awareness to every conversation.
 2. **Registers the skills directory** via the `config` hook, so OpenCode discovers all superpowers skills without symlinks or manual config.
+3. **Registers three named subagents** — `superpowers-implementer`, `superpowers-reviewer`, and `superpowers-explorer` — via the `config` hook, so dispatches can be tuned per role in `opencode.json`.
 
 ### Tool Mapping
 
 Skills speak in actions rather than naming any one runtime's tools. On OpenCode these resolve to:
 
 - "Create a todo" / "mark complete in todo list" → `todowrite`
-- `Subagent (general-purpose):` template → OpenCode's `task` tool with `subagent_type: "general"` (or `"explore"` for codebase exploration)
+- `Subagent (general-purpose):` template → OpenCode's `task` tool with `subagent_type` chosen by role: implementation/fix work → `superpowers-implementer`; reviews → `superpowers-reviewer`; exploration/research → `superpowers-explorer`; anything else, or if a named agent is unavailable → `general`
 - "Invoke a skill" → OpenCode's native `skill` tool
 - "Read a file" → `read`
 - "Create a file" / "edit a file" / "delete a file" → `apply_patch`
@@ -116,6 +117,34 @@ Skills speak in actions rather than naming any one runtime's tools. On OpenCode 
 - "Fetch a URL" → `webfetch`
 
 (Verified against the installed OpenCode CLI's tool inventory.)
+
+### Tuning subagent models
+
+OpenCode's `task` tool has no per-dispatch model setting. To control subagent
+models, set a default model per named agent in your `opencode.json` (project
+or global):
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "superpowers-implementer": { "model": "openai/gpt-5-codex" },
+    "superpowers-reviewer": { "model": "anthropic/claude-opus-4-6" },
+    "superpowers-explorer": { "model": "anthropic/claude-haiku-4-5" }
+  }
+}
+```
+
+The model IDs above are examples — use any model available to your OpenCode.
+Agents with no `model` set inherit the session default. Your `agent` entries
+override the plugin's defaults field-by-field; `"disable": true` removes an
+agent entirely (dispatches then fall back to `general`). Restart OpenCode
+after editing `opencode.json` — config is not hot-reloaded.
+
+Note: because model granularity is per role, the SDD skill's "escalate to a
+more capable model on fix rounds 4-5" guidance cannot be expressed
+per-dispatch on OpenCode. The controller uses the role's configured model and
+records in the ledger when it would have escalated.
 
 ## Troubleshooting
 
